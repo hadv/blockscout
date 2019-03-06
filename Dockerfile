@@ -3,7 +3,7 @@
 # Components include: local geth, postgres.
 
 # Build go-ethereum
-FROM alpine:3.7 as builder
+FROM alpine:3.9 as builder
 
 RUN \
   apk add --update go git make gcc musl-dev linux-headers ca-certificates && \
@@ -11,7 +11,7 @@ RUN \
   rm -rf /var/cache/apk/*
 
 # Build postgres && blockscout
-FROM bitwalker/alpine-elixir-phoenix:1.7.1
+FROM bitwalker/alpine-elixir-phoenix:1.8.1
 
 # alpine includes "postgres" user/group in base install
 #   /etc/passwd:22:postgres:x:70:70::/var/lib/postgresql:/bin/sh
@@ -164,6 +164,8 @@ ENV PORT=4000 \
     MIX_ENV="prod" \
     SECRET_KEY_BASE="RMgI4C1HSkxsEjdhtGMfwAHfyT6CKWXOgzCboJflfSm4jeAlic52io05KB6mqzc5" \
     ETHEREUM_JSONRPC_VARIANT="geth" \
+    COIN="NTY" \
+    LOGO="/images/nexty_logo.png" \
     DATABASE_URL="postgresql://postgres:@localhost:5432/explorer?ssl=false" \
     POSTGRES_PASSWORD=\
     POSTGRES_USER=postgres\
@@ -186,11 +188,12 @@ RUN mix compile
 # Add blockscout npm deps
 RUN cd apps/block_scout_web/assets/ && \
     npm install && \
-    npm run deploy 
+    npm run deploy && \
+    cd -
 
 RUN cd apps/explorer/ && \
     npm install && \
-    apk del --force-broken-world automake libtool inotify-tools autoconf
+    apk update && apk del --force-broken-world alpine-sdk gmp-dev automake libtool inotify-tools autoconf python
 
 EXPOSE 4000
 
