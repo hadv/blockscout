@@ -165,7 +165,7 @@ ENV PORT=4000 \
     SECRET_KEY_BASE="RMgI4C1HSkxsEjdhtGMfwAHfyT6CKWXOgzCboJflfSm4jeAlic52io05KB6mqzc5" \
     ETHEREUM_JSONRPC_VARIANT="geth" \
     COIN="NTY" \
-    LOGO="/images/nexty_logo.png" \
+    LOGO="/images/nexty_grey_icon.svg" \
     DATABASE_URL="postgresql://postgres:@localhost:5432/explorer?ssl=false" \
     POSTGRES_PASSWORD=\
     POSTGRES_USER=postgres\
