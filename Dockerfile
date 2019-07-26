@@ -1,17 +1,6 @@
-# This dockerfile will combine all the stuff needed by blockscout
-# into a single docker image for puppeth usage.
-# Components include: local geth, postgres.
+FROM bitwalker/alpine-elixir-phoenix:1.9.0
 
-# Build go-ethereum
-FROM alpine:3.9 as builder
-
-RUN \
-  apk add --update go git make gcc musl-dev linux-headers ca-certificates && \
-  apk del go git make gcc musl-dev linux-headers && \
-  rm -rf /var/cache/apk/*
-
-# Build postgres && blockscout
-FROM bitwalker/alpine-elixir-phoenix:1.8.1
+MAINTAINER Ha ĐANG <dvietha@gmail.com>
 
 # alpine includes "postgres" user/group in base install
 #   /etc/passwd:22:postgres:x:70:70::/var/lib/postgresql:/bin/sh
@@ -34,8 +23,8 @@ ENV LANG en_US.utf8
 RUN mkdir /docker-entrypoint-initdb.d
 
 ENV PG_MAJOR 11
-ENV PG_VERSION 11.1
-ENV PG_SHA256 90815e812874831e9a4bf6e1136bf73bc2c5a0464ef142e2dfea40cda206db08
+ENV PG_VERSION 11.4
+ENV PG_SHA256 02802ddffd1590805beddd1e464dd28a46a41a5f1e1df04bab4f46663195cc8b
 
 RUN set -ex \
 	\
@@ -65,6 +54,7 @@ RUN set -ex \
 		libedit-dev \
 		libxml2-dev \
 		libxslt-dev \
+		linux-headers \
 		make \
 #		openldap-dev \
 		openssl-dev \
@@ -143,6 +133,7 @@ RUN set -ex \
 	&& rm -rf \
 		/usr/src/postgresql \
 		/usr/local/share/doc \
+		/usr/local/share/man \
 	&& find /usr/local -name '*.a' -delete
 
 # make the sample config easier to munge (and "correct by default")
@@ -151,14 +142,15 @@ RUN sed -ri "s!^#?(listen_addresses)\s*=\s*\S+.*!\1 = '*'!" /usr/local/share/pos
 RUN mkdir -p /var/run/postgresql && chown -R postgres:postgres /var/run/postgresql && chmod 2777 /var/run/postgresql
 
 ENV PGDATA /var/lib/postgresql/data
-RUN mkdir -p "$PGDATA" && chown -R postgres:postgres "$PGDATA" && chmod 777 "$PGDATA" # this 777 will be replaced by 700 at runtime (allows semi-arbitrary "--user" values)
+# this 777 will be replaced by 700 at runtime (allows semi-arbitrary "--user" values)
+RUN mkdir -p "$PGDATA" && chown -R postgres:postgres "$PGDATA" && chmod 777 "$PGDATA"
 VOLUME /var/lib/postgresql/data
 
 RUN wget https://raw.githubusercontent.com/docker-library/postgres/master/$PG_MAJOR/alpine/docker-entrypoint.sh -O /usr/local/bin/docker-entrypoint.sh && \
     chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Build blockscout
-RUN apk --no-cache --update add automake libtool inotify-tools autoconf python
+RUN apk --no-cache --update add alpine-sdk gmp-dev automake libtool inotify-tools autoconf python
 
 ENV PORT=4000 \
     MIX_ENV="prod" \
